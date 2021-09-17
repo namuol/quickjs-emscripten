@@ -18,7 +18,7 @@ import {
   VmFunctionImplementation,
   SuccessOrFail,
 } from './vm-interface'
-import { QuickJSEmscriptenModule } from './emscripten-types'
+import { QuickJSEmscriptenModule, FileSystem } from './emscripten-types'
 import { Lifetime, WeakLifetime, StaticLifetime, Scope, Disposable } from './lifetime'
 export { Lifetime, WeakLifetime, StaticLifetime, Scope, Disposable }
 
@@ -253,6 +253,7 @@ export class QuickJSVm implements LowLevelJavascriptVm<QuickJSHandle>, Disposabl
   private _true: QuickJSHandle | undefined = undefined
   private _global: QuickJSHandle | undefined = undefined
   private _scope = new Scope()
+  FS: FileSystem
 
   /**
    * Use {@link QuickJS.createVm} to create a QuickJSVm instance.
@@ -264,6 +265,7 @@ export class QuickJSVm implements LowLevelJavascriptVm<QuickJSHandle>, Disposabl
     rt: Lifetime<JSRuntimePointer>
   }) {
     this.module = args.module
+    this.FS = this.module.FS
     this.ffi = args.ffi
     this.rt = this._scope.manage(args.rt)
     this.ctx = this._scope.manage(args.ctx)

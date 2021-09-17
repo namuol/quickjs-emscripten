@@ -286,10 +286,59 @@ describe('QuickJSVm', async () => {
     })
 
     it('can handle imports', () => {
-      vm.unwrapResult(vm.evalCode(`import {name} from './foo.js'; var declaredWithEval = name`)).dispose()
-      const declaredWithEval = vm.getProp(vm.global, 'declaredWithEval')
-      assert.equal(vm.getString(declaredWithEval), 'Nice!')
-      declaredWithEval.dispose()
+      vm.FS.writeFile(
+        './foo.js',
+        `
+        export const name = "Nice!";
+        `
+      )
+
+      vm.FS.writeFile(
+        './module.js',
+        `
+        import {name} from './foo.js';
+    
+        // NOTE: When using import like we are here, QuickJS will detect
+        // this as an ES module and evaluate in Module Mode.
+        //
+        // Module Mode does not operate directly on the global object
+        // unless you explicitly mutate it via globalThis.
+        globalThis.declaredWithEval = name;
+
+        export const name = name;
+
+        export const foo = () => {
+          print('hello!')
+        };
+        `
+      )
+
+      vm.unwrapResult(
+        vm.evalCode(`
+          import('./module.js').then(module => {
+            globalThis.__$$__module__$$__ = module;
+          });
+        `)
+      ).dispose()
+
+      vm.executePendingJobs()
+
+      {
+        const declaredWithEval = vm.getProp(vm.global, 'declaredWithEval')
+        assert.equal(vm.getString(declaredWithEval), 'Nice!')
+        declaredWithEval.dispose()
+      }
+
+      {
+        const mod = vm.getProp(vm.global, '__$$__module__$$__')
+        const fromModule = vm.getProp(mod, 'name')
+        assert.equal(vm.getString(fromModule), 'Nice!')
+        mod.dispose()
+        fromModule.dispose()
+      }
+
+      vm.FS.unlink('./foo.js')
+      vm.FS.unlink('./module.js')
     })
   })
 
