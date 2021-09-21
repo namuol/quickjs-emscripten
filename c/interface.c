@@ -250,14 +250,39 @@ JSValueConst *QTS_GetTrue() {
 }
 
 // Adapted from `js_load_file`
-EM_ASYNC_JS(void*, my_js_load_file, (void *pbuf_len, const char *filename), {
-  const jsString = 'export const name = "Nice!";';
+EM_JS(void*, my_js_load_file, (void *pbuf_len, const char *filename_ptr), {
+  const filename = UTF8ToString(filename_ptr);
+  let jsString;
+
+  if (typeof XMLHttpRequest === 'function') {
+    // NOTE: Here we use a SYNCHRONOUS XHR to get around the requirement that
+    // QuickJS expects file IO to block the thread.
+    //
+    // This is a *temporary* solution.
+    //
+    // Ideally, we would use `EM_ASYNC_JS` here, and fix/enhance/rewrite parts
+    // of QuickJS and/or `quickjs-emscripten` to support async APIs while
+    // evaluating modules so that we could just use `fetch` here instead.
+    const req = new XMLHttpRequest();
+    req.open('GET', filename, false);
+    req.send(null);
+    if (req.status === 200) {
+      jsString = req.responseText;
+    } else {
+      throw new Error(`Failed to load file "${filename}"`);
+    }
+  } else if (typeof require === 'function') {
+    jsString = require('fs').readFileSync(filename, 'utf-8');
+  } else {
+    throw new TypeError('No way to load module; only Node or browsers with XHRHttpRequest are supported');
+  }
+
   // 'jsString.length' would return the length of the string as UTF-16
   // units, but Emscripten C strings operate as UTF-8.
-  const lengthBytes = lengthBytesUTF8(jsString)+1;
+  const lengthBytes = lengthBytesUTF8(jsString) + 1;
   const stringOnWasmHeap = _malloc(lengthBytes);
   stringToUTF8(jsString, stringOnWasmHeap, lengthBytes);
-  HEAP32[pbuf_len >> 2] = lengthBytes;
+  HEAP32[pbuf_len >> 2] = lengthBytes - 1;
   return stringOnWasmHeap;
 });
 
@@ -280,6 +305,7 @@ JSModuleDef *my_js_module_loader(JSContext *ctx,
         JSValue func_val;
     
         buf = my_js_load_file(&buf_len, module_name);
+        
         if (!buf) {
             JS_ThrowReferenceError(ctx, "could not load module filename '%s'",
                                    module_name);

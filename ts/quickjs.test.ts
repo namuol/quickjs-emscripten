@@ -286,7 +286,7 @@ describe('QuickJSVm', async () => {
     })
 
     it('can handle imports', () => {
-      vm.unwrapResult(vm.evalCode(`import {name} from './foo.js'; var declaredWithEval = name`)).dispose()
+      vm.unwrapResult(vm.evalCode(`import {name} from '${__dirname}/../test/foo.js'; globalThis.declaredWithEval = name;`)).dispose()
       const declaredWithEval = vm.getProp(vm.global, 'declaredWithEval')
       assert.equal(vm.getString(declaredWithEval), 'Nice!')
       declaredWithEval.dispose()

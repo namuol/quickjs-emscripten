@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import './App.css'
 import { getQuickJS } from 'quickjs-emscripten'
+import { versions } from 'process'
 
 function stringify(val: unknown) {
   if (typeof val === 'undefined') {
@@ -18,16 +19,32 @@ let cow = 1;
 function App() {
   const [js, setJs] = React.useState(initialCode)
   const [evalResult, setEvalResult] = React.useState<unknown>(undefined)
+  const [consoleContents, setConsoleContents] = React.useState<string>('')
   const handleEval = React.useCallback(async () => {
+    let consoleContents = '';
     const QuickJS = await getQuickJS()
+    const vm = QuickJS.createVm()
+    const printFn = vm.newFunction('print', (...args) => {
+      consoleContents += args.map(arg => vm.dump(arg)).join(' ') + '\n';
+      for (const arg of args) {
+        arg.dispose()
+      }
+      return vm.undefined
+    })
+    vm.setProp(vm.global, 'print', printFn)
+    printFn.dispose()
     try {
-      const result = QuickJS.evalCode(js)
-      console.log('eval result:', result)
-      setEvalResult(result)
+      setConsoleContents('')
+      const result = vm.unwrapResult(vm.evalCode(js))
+      console.log('eval result:', vm.dump(result))
+      setConsoleContents(consoleContents);
+      setEvalResult(vm.dump(result))
+      result.dispose();
     } catch (err) {
       console.log('eval error:', err)
       setEvalResult(err)
     }
+    vm.dispose();
   }, [js, setEvalResult])
   useEffect(() => {
     handleEval()
@@ -59,6 +76,8 @@ function App() {
         </div>
         <h3>Eval result:</h3>
         <pre>{stringify(evalResult)}</pre>
+        <h3>Console:</h3>
+        <pre>{consoleContents}</pre>
       </div>
     </div>
   )
