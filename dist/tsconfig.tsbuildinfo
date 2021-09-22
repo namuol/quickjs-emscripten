@@ -150,7 +150,7 @@
         "signature": "a5176158f538b37bbc359b95fbb4ab3f4b54f8f6a4b7d3bdc0cb4fbdcbc9c8f2"
       },
       "../ts/quickjs-emscripten-module.js": {
-        "version": "e787b9d6b54c18fb2fea162de79c12c02d4562c7e1132c6e8223557e4ac7ce44",
+        "version": "9354aceda96340a780aa1072f7ed0f0826714a72778dd7182d5168d6f94dc0c0",
         "signature": "75a8952e779d33b19b01b33b77859de5c004c82eee4e2cf862fd16326f46134b"
       },
       "../node_modules/@types/emscripten/index.d.ts": {
@@ -1671,7 +1671,11 @@
       "../ts/ffi.ts",
       "../ts/quickjs-emscripten-module.d.ts",
       "../ts/vm-interface.ts",
+      "../ts/quickjs.ts",
+      "../ts/lifetime.ts",
+      "../ts/lifetime.test.ts",
       "../node_modules/@types/mocha/index.d.ts",
+      "../ts/quickjs.test.ts",
       "../node_modules/@types/emscripten/index.d.ts",
       "../node_modules/@types/minimatch/index.d.ts",
       "../node_modules/@types/node/globals.d.ts",
@@ -1723,11 +1727,7 @@
       "../../../node_modules/form-data/index.d.ts",
       "../../../node_modules/@types/tough-cookie/index.d.ts",
       "../../../node_modules/@types/request/index.d.ts",
-      "../ts/quickjs.ts",
-      "../ts/quickjs.test.ts",
-      "../ts/lifetime.ts",
-      "../ts/quickjs-emscripten-module.js",
-      "../ts/lifetime.test.ts"
+      "../ts/quickjs-emscripten-module.js"
     ]
   },
   "version": "3.7.4"

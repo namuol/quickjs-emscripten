@@ -381,7 +381,7 @@ var QuickJSRaw = (function () {
                     }
                     else
                         d = !1, c = a.byteOffset;
-                    return { Xa: c, Sa: d };
+                    return { Wa: c, Sa: d };
                 }, Ka: function (a, b, c, d, f) { if (32768 !== (a.node.mode & 61440))
                     throw new R(43); if (f & 2)
                     return 0; S.oa.write(a, b, 0, d, c, !1); return 0; } } }, Ya = null, Za = {}, T = [], $a = 1, U = null, ab = !0, R = null, Wa = {};
@@ -444,7 +444,7 @@ var QuickJSRaw = (function () {
                 throw new R(10);
             if (16384 !== (f.mode & 61440))
                 throw new R(54);
-        } b = { type: a, Wa: {}, Ja: b, Na: [] }; a = a.ta(b); a.ta = b; b.root = a; c ? Ya = a : f && (f.ya = b, f.ta && f.ta.Na.push(b)); }
+        } b = { type: a, Va: {}, Ja: b, Na: [] }; a = a.ta(b); a.ta = b; b.root = a; c ? Ya = a : f && (f.ya = b, f.ta && f.ta.Na.push(b)); }
         function nb(a, b, c) { var d = V(a, { parent: !0 }).node; a = La(a); if (!a || "." === a || ".." === a)
             throw new R(28); var f = ib(d, a); if (f)
             throw new R(f); if (!d.ma.xa)
@@ -791,7 +791,7 @@ var QuickJSRaw = (function () {
                 a = J[Z() + (a ? 4 : 0) >> 2];
                 J[b + 40 >> 2] = a;
                 return b;
-            }, n: function (a, b) { b = F(b); b = (globalThis || window).Va(b); var c = I(b) + 1, d = ua(c); oa(b, d, c); J[a >> 2] = c - 1; return d; } };
+            }, n: function (a, b) { b = F(b); b = (globalThis || window).__loadModule__(b); var c = I(b) + 1, d = ua(c); oa(b, d, c); J[a >> 2] = c - 1; return d; } };
         (function () {
             function a(f) { e.asm = f.exports; ja = e.asm.o; wa(); K = e.asm.fa; ya.unshift(e.asm.p); L--; e.monitorRunDependencies && e.monitorRunDependencies(L); 0 == L && (null !== Ba && (clearInterval(Ba), Ba = null), M && (f = M, M = null, f())); }
             function b(f) { a(f.instance); }
