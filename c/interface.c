@@ -253,10 +253,13 @@ JSValueConst *QTS_GetTrue() {
 EM_JS(void*, my_js_load_file, (void *pbuf_len, const char *path_ptr), {
   const path = UTF8ToString(path_ptr);
 
+  // Note: Using a quoted `__loadModule__` accessor here because we don't want
+  // our minifier to mangle it.
+  //
   // See also:
   // - `QuickJSEvalOptions`
   // - `setSynchronousModuleLoader`
-  const jsString = (globalThis || window).__loadModule__(path);
+  const jsString = (globalThis || window)['__loadModule__'](path);
 
   // 'jsString.length' would return the length of the string as UTF-16
   // units, but Emscripten C strings operate as UTF-8.
