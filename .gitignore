@@ -7,7 +7,6 @@ npm-error.log
 *.tsbuildinfo
 
 /build
-/dist
 
 # QuickJS build stuff
 /quickjs/test_fib.c

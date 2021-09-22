@@ -98,6 +98,11 @@ export declare class QuickJSDeferredPromise implements Disposable {
  */
 export declare type ExecutePendingJobsResult = SuccessOrFail<number, QuickJSHandle>;
 /**
+ * A function that takes in a file path, and *synchronously* returns the JS
+ * module's string contents.
+ */
+export declare type SynchronousModuleLoader = (path: string) => string;
+/**
  * QuickJSVm wraps a QuickJS Javascript runtime (JSRuntime*) and context (JSContext*).
  * This class's methods return {@link QuickJSHandle}, which wrap C pointers (JSValue*).
  * It's the caller's responsibility to call `.dispose()` on any
@@ -137,6 +142,7 @@ export declare class QuickJSVm implements LowLevelJavascriptVm<QuickJSHandle>, D
     private _true;
     private _global;
     private _scope;
+    private _loadModuleSync;
     /**
      * Use {@link QuickJS.createVm} to create a QuickJSVm instance.
      */
@@ -335,6 +341,21 @@ export declare class QuickJSVm implements LowLevelJavascriptVm<QuickJSHandle>, D
      */
     setMemoryLimit(limitBytes: number): void;
     /**
+     * When QuickJS encounters an `import x from '...path'` statement, it needs a
+     * way to _synchronously_ load the module from the given path.
+     *
+     * By default, we use `fs.readFileSync` in Node environments, or a
+     * [synchronous
+     * `XMLHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests#synchronous_request)
+     * in the browser.
+     *
+     * Provide a function that takes a path string and returns the JS string
+     * contents for the module to override the default behavior.
+     *
+     * You can switch back to the default module loader by passing `null`.
+     */
+    setSynchronousModuleLoader(synchronousModuleLoader: SynchronousModuleLoader | null): void;
+    /**
      * Compute memory usage for this runtime. Returns the result as a handle to a
      * JSValue object. Use [[dump]] to convert to a native object.
      * Calling this method will allocate more memory inside the runtime. The information
@@ -431,6 +452,19 @@ export interface QuickJSEvalOptions {
      * Memory limit, in bytes, of WASM heap memory used by the QuickJS VM.
      */
     memoryLimitBytes?: number;
+    /**
+     * When QuickJS encounters an `import x from '...path'` statement, it needs a
+     * way to _synchronously_ load the module from the given path.
+     *
+     * Provide a function that takes a path string and returns the JS string
+     * contents for the module to override the default behavior.
+     *
+     * By default, we use `fs.readFileSync` in Node environments, or a
+     * [synchronous
+     * `XMLHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests#synchronous_request)
+     * in the browser.
+     */
+    loadModuleSync?: SynchronousModuleLoader;
 }
 /**
  * QuickJS presents a Javascript interface to QuickJS, a Javascript interpreter that

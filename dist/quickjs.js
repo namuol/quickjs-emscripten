@@ -160,6 +160,33 @@ var QuickJSDeferredPromise = /** @class */ (function () {
     return QuickJSDeferredPromise;
 }());
 exports.QuickJSDeferredPromise = QuickJSDeferredPromise;
+function defaultSynchronousModuleLoader(path) {
+    if (typeof XMLHttpRequest === 'function') {
+        // NOTE: Here we use a SYNCHRONOUS XHR to get around the requirement that
+        // QuickJS expects file IO to block the thread.
+        //
+        // This is a *temporary* solution.
+        //
+        // Ideally, we would use `EM_ASYNC_JS` here, and fix/enhance/rewrite parts
+        // of QuickJS and/or `quickjs-emscripten` to support async APIs while
+        // evaluating modules so that we could just use `fetch` here instead.
+        var req = new XMLHttpRequest();
+        req.open('GET', path, false);
+        req.send(null);
+        if (req.status === 200) {
+            return req.responseText;
+        }
+        else {
+            throw new Error("Failed to load file \"" + path + "\"");
+        }
+    }
+    else if (typeof require === 'function') {
+        return require('fs').readFileSync(path, 'utf-8');
+    }
+    else {
+        throw new TypeError('No way to load module; only Node or browsers with XHRHttpRequest are supported');
+    }
+}
 /**
  * QuickJSVm wraps a QuickJS Javascript runtime (JSRuntime*) and context (JSContext*).
  * This class's methods return {@link QuickJSHandle}, which wrap C pointers (JSValue*).
@@ -262,6 +289,7 @@ var QuickJSVm = /** @class */ (function () {
         this.ffi = args.ffi;
         this.rt = this._scope.manage(args.rt);
         this.ctx = this._scope.manage(args.ctx);
+        this._loadModuleSync = defaultSynchronousModuleLoader;
     }
     Object.defineProperty(QuickJSVm.prototype, "undefined", {
         /**
@@ -566,9 +594,15 @@ var QuickJSVm = /** @class */ (function () {
      */
     QuickJSVm.prototype.evalCode = function (code, filename) {
         var _this = this;
-        if (filename === void 0) { filename = "eval.js"; }
+        if (filename === void 0) { filename = 'eval.js'; }
         var resultPtr = this.newHeapCharPointer(code).consume(function (charHandle) {
-            return _this.ffi.QTS_Eval(_this.ctx.value, charHandle.value, filename);
+            var global = globalThis || window;
+            // @ts-ignore
+            global.__loadModule__ = _this._loadModuleSync;
+            var result = _this.ffi.QTS_Eval(_this.ctx.value, charHandle.value, filename);
+            // @ts-ignore
+            global.__loadModule__ = undefined;
+            return result;
         });
         var errorPtr = this.ffi.QTS_ResolveException(this.ctx.value, resultPtr);
         if (errorPtr) {
@@ -682,6 +716,23 @@ var QuickJSVm = /** @class */ (function () {
             throw new Error('Cannot set memory limit to negative number. To unset, pass -1');
         }
         this.ffi.QTS_RuntimeSetMemoryLimit(this.rt.value, limitBytes);
+    };
+    /**
+     * When QuickJS encounters an `import x from '...path'` statement, it needs a
+     * way to _synchronously_ load the module from the given path.
+     *
+     * By default, we use `fs.readFileSync` in Node environments, or a
+     * [synchronous
+     * `XMLHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Synchronous_and_Asynchronous_Requests#synchronous_request)
+     * in the browser.
+     *
+     * Provide a function that takes a path string and returns the JS string
+     * contents for the module to override the default behavior.
+     *
+     * You can switch back to the default module loader by passing `null`.
+     */
+    QuickJSVm.prototype.setSynchronousModuleLoader = function (synchronousModuleLoader) {
+        this._loadModuleSync = synchronousModuleLoader || defaultSynchronousModuleLoader;
     };
     /**
      * Compute memory usage for this runtime. Returns the result as a handle to a

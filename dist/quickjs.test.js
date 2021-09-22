@@ -286,6 +286,13 @@ mocha_1.describe('QuickJSVm', function () { return __awaiter(void 0, void 0, voi
                 assert_1.default.equal(vm.getString(declaredWithEval), 'Nice!');
                 declaredWithEval.dispose();
             });
+            mocha_1.it('can handle imports with custom module loader', function () {
+                vm.setSynchronousModuleLoader(function (_) { return "export const name = 'Nice!';"; });
+                vm.unwrapResult(vm.evalCode("import {name} from 'fake-file.js'; globalThis.declaredWithEval = name;")).dispose();
+                var declaredWithEval = vm.getProp(vm.global, 'declaredWithEval');
+                assert_1.default.equal(vm.getString(declaredWithEval), 'Nice!');
+                declaredWithEval.dispose();
+            });
         });
         mocha_1.describe('.executePendingJobs', function () {
             mocha_1.it('runs pending jobs', function () {
